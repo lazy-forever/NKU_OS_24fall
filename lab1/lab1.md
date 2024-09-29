@@ -63,7 +63,7 @@ Symbol "bootstack" is at 0x80202000 in a file compiled without debugging.
 
    `mov a0, sp` 将当前的堆栈指针 (`sp`) 的值移动到寄存器 `a0` 中，寄存器 `a0` 用于传递函数的第一个参数，`sp` 指向的堆栈位置包含了 `SAVE_ALL` 宏保存的所有寄存器值和相关的控制与状态信息， `trap` 函数可以读取这些信息来进行对应的处理。
 
-2. **`SAVE_ALL` 中寄寄存器保存在栈中的位置是什么确定的？**
+2. **`SAVE_ALL` 中寄存器保存在栈中的位置是什么确定的？**
 
    调用 `SAVE_ALL` 时，通过 `addi sp, sp, -36 * REGBYTES` 分配了足够的栈空间，每个寄存器在堆栈中的保存位置是通过其在 `SAVE_ALL` 宏中的保存顺序和预定义的偏移量确定的，如`x0` 保存到 `0*REGBYTES(sp)`，`s0`保存到 `2*REGBYTES(sp)`。
 
@@ -91,16 +91,23 @@ Symbol "bootstack" is at 0x80202000 in a file compiled without debugging.
 
 ### 扩展练习 Challenge3：完善异常中断
 
-> 编程完善在触发一条非法指令异常 mret 和，在 kern/trap/trap.c的异常处理函数中捕获，并对其进行处理，简单输出异常类型和异常指令触发地址，即“Illegal instruction caught at 0x(地址)”，“ebreak caught at 0x（地址）”与“Exception type:Illegal instruction"，“Exception type: breakpoint”。（
+> 编程完善在触发一条非法指令异常 mret 和 ebreak ，在 kern/trap/trap.c的异常处理函数中捕获，并对其进行处理，简单输出异常类型和异常指令触发地址，即“Illegal instruction caught at 0x(地址)”，“ebreak caught at 0x（地址）”与“Exception type:Illegal instruction"，“Exception type: breakpoint”。
 
 只需在 trap.c 修改对应的异常处理程序，如
 
 ```
 case CAUSE_ILLEGAL_INSTRUCTION:
     // 处理非法指令异常
-    cprintf("Illegal instruction caught at 0x%08x\n", tf->epc);
     cprintf("Exception type: Illegal instruction\n");
+    cprintf("Illegal instruction caught at 0x%016x\n", tf->epc);
     tf->epc += 4;
+    break;
+case CAUSE_BREAKPOINT:
+    //断点异常处理
+    cprintf("Exception type : Breakpoint\n");
+    cprintf("Breakpoint caught at 0x%016x\n", tf->epc);
+    tf->epc += 2;
+    break;
 ```
 
 在 init.c 中可以测试我们的修改，在 `kern_init`  函数中加入
