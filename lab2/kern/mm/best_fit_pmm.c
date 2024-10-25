@@ -55,7 +55,7 @@
  *               (5.2) reset the fields of pages, such as p->ref, p->flags (PageProperty)
  *               (5.3) try to merge low addr or high addr blocks. Notice: should change some pages's p->property correctly.
  */
-free_area_t free_area;
+extern free_area_t free_area; // defined in default_pmm.c
 
 #define free_list (free_area.free_list)
 #define nr_free (free_area.nr_free)
