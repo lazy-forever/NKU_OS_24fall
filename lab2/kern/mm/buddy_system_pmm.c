@@ -86,8 +86,8 @@ buddy_system_free_pages(struct Page *base, size_t n) {
         order++;
     }
     while (1) {
-        size_t buddy_idx = page2ppn(p) ^ (1 << order);
-        struct Page *buddy_page = pa2page(buddy_idx << PGSHIFT);
+        size_t buddy_idx = page2ppn(p) ^ (1 << order); //伙伴页的索引
+        struct Page *buddy_page = pa2page(buddy_idx << PGSHIFT); //伙伴页
         if (order >= MAX_ORDER || buddy_idx >= npage || buddy_page->property != (1 << order) || PageProperty(buddy_page)) {
             p->property = 1 << order;
             SetPageProperty(p);
@@ -95,10 +95,11 @@ buddy_system_free_pages(struct Page *base, size_t n) {
             list_add(&free_list(order), &(p->page_link));
             break;
         }
-        list_entry_t *le = &(buddy_page->page_link);
-        if (le != &free_list(order)) {
-            list_del(le);
-        }
+        // list_entry_t *le = &(buddy_page->page_link);
+        // if (le != &free_list(order)) {
+        //     list_del(le);
+        // }
+        list_del(&(buddy_page->page_link));
         ClearPageProperty(buddy_page);
         nr_free(order)--;
         p = (p < buddy_page) ? p : buddy_page;
