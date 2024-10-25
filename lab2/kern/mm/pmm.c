@@ -1,5 +1,6 @@
-// #include <default_pmm.h>
+#include <default_pmm.h>
 #include <best_fit_pmm.h>
+#include <buddy_system_pmm.h>
 #include <defs.h>
 #include <error.h>
 #include <memlayout.h>
