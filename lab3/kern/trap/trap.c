@@ -13,6 +13,7 @@
 #include <sbi.h>
 
 #define TICK_NUM 100
+volatile size_t num = 0; /* LAB1 OUR CODE */
 
 static void print_ticks() {
     cprintf("%d ticks\n", TICK_NUM);
@@ -150,6 +151,10 @@ void interrupt_handler(struct trapframe *tf) {
             clock_set_next_event();
             if (++ticks % TICK_NUM == 0) {
                 print_ticks();
+                if (++num == 10)
+                {
+                    sbi_shutdown();
+                }
             }
             break;
         case IRQ_H_TIMER:
@@ -187,10 +192,14 @@ void exception_handler(struct trapframe *tf) {
             cprintf("Instruction access fault\n");
             break;
         case CAUSE_ILLEGAL_INSTRUCTION:
-            cprintf("Illegal instruction\n");
+            cprintf("Exception type: Illegal instruction");
+            cprintf("Illegal instruction caught at 0x%016x\n", tf->epc);
+            tf->epc += 4;
             break;
         case CAUSE_BREAKPOINT:
-            cprintf("Breakpoint\n");
+            cprintf("Exception type: Breakpoint");
+            cprintf("Breakpoint caught at 0x%016x\n", tf->epc);
+            tf->epc += 2;
             break;
         case CAUSE_MISALIGNED_LOAD:
             cprintf("Load address misaligned\n");
