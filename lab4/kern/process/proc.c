@@ -114,7 +114,7 @@ alloc_proc(void) {
         proc->cr3 = boot_cr3;
         proc->flags = 0;
         memset(proc->name, 0, PROC_NAME_LEN + 1);
-        nr_process++;
+        // nr_process++;
     }
     return proc;
 }
