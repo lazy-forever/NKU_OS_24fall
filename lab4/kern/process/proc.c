@@ -102,19 +102,19 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
-        proc->state = PROC_UNINIT;
-        proc->pid = -1;
-        proc->runs = 0;
-        proc->kstack = 0;
-        proc->need_resched = 0;
-        proc->parent = NULL;
-        proc->mm = NULL;
-        memset(&(proc->context), 0, sizeof(struct context));
+        proc->state = PROC_UNINIT; // set the state of process
+        proc->pid = -1; // set the pid of process
+        proc->runs = 0; // set the run times of process
+        proc->kstack = 0; // set the kernel stack of process
+        proc->need_resched = 0; // set the need_resched of process
+        proc->parent = NULL; // set the parent of process
+        proc->mm = NULL; // set the mm of process
+        memset(&(proc->context), 0, sizeof(struct context)); // set the context of process
         proc->tf = NULL;
         proc->cr3 = boot_cr3;
         proc->flags = 0;
-        memset(proc->name, 0, PROC_NAME_LEN);
-        nr_process++;
+        memset(proc->name, 0, PROC_NAME_LEN + 1);
+        // nr_process++;
     }
     return proc;
 }
