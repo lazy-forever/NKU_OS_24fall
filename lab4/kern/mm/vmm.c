@@ -16,7 +16,7 @@
   There a linear link list for vma & a redblack link list for vma in mm.
 ---------------
   mm related functions:
-   golbal functions
+   global functions
      struct mm_struct * mm_create(void)
      void mm_destroy(struct mm_struct *mm)
      int do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr)
