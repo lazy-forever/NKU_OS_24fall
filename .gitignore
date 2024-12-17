@@ -54,3 +54,6 @@ dkms.conf
 # lab
 lab*/obj
 lab*/bin
+
+# ide
+.idea/
