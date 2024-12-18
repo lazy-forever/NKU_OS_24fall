@@ -706,7 +706,7 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     if ((ret = load_icode(binary, size)) != 0) {
         goto execve_exit;
     }
-    set_proc_name(current, local_name);
+    set_proc_name(current, local_name);// memcpy 不能使用相同的地址
     return 0;
 
 execve_exit:
