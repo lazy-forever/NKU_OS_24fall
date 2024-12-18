@@ -103,13 +103,26 @@ alloc_proc(void) {
      *       uint32_t flags;                             // Process flag
      *       char name[PROC_NAME_LEN + 1];               // Process name
      */
-
+        proc->state = PROC_UNINIT; // set the state of process
+        proc->pid = -1; // set the pid of process
+        proc->runs = 0; // set the run times of process
+        proc->kstack = 0; // set the kernel stack of process
+        proc->need_resched = 0; // set the need_resched of process
+        proc->parent = NULL; // set the parent of process
+        proc->mm = NULL; // set the mm of process
+        memset(&(proc->context), 0, sizeof(struct context)); // set the context of process
+        proc->tf = NULL; // set the trapframe of process
+        proc->cr3 = boot_cr3; // set the cr3 of process
+        proc->flags = 0; // set the flags of process
+        memset(proc->name, 0, PROC_NAME_LEN + 1); // set the name of process
      //LAB5 YOUR CODE : (update LAB4 steps)
      /*
      * below fields(add in LAB5) in proc_struct need to be initialized  
      *       uint32_t wait_state;                        // waiting state
      *       struct proc_struct *cptr, *yptr, *optr;     // relations between processes
      */
+        proc->wait_state = 0; // set the wait_state of process
+        proc->cptr = proc->yptr = proc->optr = NULL; // set the relation links of process
     }
     return proc;
 }
@@ -207,6 +220,16 @@ proc_run(struct proc_struct *proc) {
         *   switch_to():              Context switching between two processes
         */
 
+        uint32_t intr_flag;
+        struct proc_struct *prev = current, *next = proc;
+        local_intr_save(intr_flag);
+        {   
+            current = proc;
+            lcr3(proc->cr3);
+            switch_to(&(prev->context), &(next->context));
+            cprintf("switch from %d to %d\n", prev->pid, next->pid);// lab5 debug
+        }
+        local_intr_restore(intr_flag);
     }
 }
 
@@ -388,12 +411,41 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
      */
 
     //    1. call alloc_proc to allocate a proc_struct
+    proc = alloc_proc();
+    if (proc == NULL) {
+        goto fork_out;
+    }
+    proc->parent = current;
+    assert(current->wait_state == 0);
+
     //    2. call setup_kstack to allocate a kernel stack for child process
+    if (setup_kstack(proc) != 0) {
+        goto bad_fork_cleanup_proc;
+    }
     //    3. call copy_mm to dup OR share mm according clone_flag
+    if (copy_mm(clone_flags, proc) != 0)
+        goto bad_fork_cleanup_kstack;
+
     //    4. call copy_thread to setup tf & context in proc_struct
+    copy_thread(proc, stack, tf);
+
     //    5. insert proc_struct into hash_list && proc_list
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    {
+        proc->pid = get_pid();
+        hash_proc(proc);
+        set_links(proc);
+        // list_add(&proc_list, &(proc->list_link));
+        // nr_process ++;
+    }
+    local_intr_restore(intr_flag);
+
     //    6. call wakeup_proc to make the new child process RUNNABLE
+    wakeup_proc(proc);
+
     //    7. set ret vaule using child proc's pid
+    ret = proc->pid;
 
     //LAB5 YOUR CODE : (update LAB4 steps)
     //TIPS: you should modify your written code in lab4(step1 and step5), not add more code.
@@ -420,6 +472,7 @@ bad_fork_cleanup_proc:
 //   3. call scheduler to switch to other process
 int
 do_exit(int error_code) {
+    cprintf("do_exit: pid %d, name %s\n", current->pid, current->name);// lab5 debug
     if (current == idleproc) {
         panic("idleproc exit.\n");
     }
@@ -603,7 +656,12 @@ load_icode(unsigned char *binary, size_t size) {
      *          tf->status should be appropriate for user program (the value of sstatus)
      *          hint: check meaning of SPP, SPIE in SSTATUS, use them by SSTATUS_SPP, SSTATUS_SPIE(defined in risv.h)
      */
-
+    // Set the user stack top
+    tf->gpr.sp = USTACKTOP;
+    // Set the entry point of the user program
+    tf->epc = elf->e_entry;
+    // Set the status register for the user program
+    tf->status = (read_csr(sstatus) & ~SSTATUS_SPP) | SSTATUS_SPIE;
 
     ret = 0;
 out:
